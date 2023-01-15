@@ -22,7 +22,7 @@ http://timothybrooks.com/tech/unprocessing
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-
+import numpy as np
 import tensorflow as tf
 
 
@@ -110,9 +110,21 @@ def mosaic(image):
   green_red = image[0::2, 1::2, 1]
   green_blue = image[1::2, 0::2, 1]
   blue = image[1::2, 1::2, 2]
+
+  
+  image = tf.Session().run(image)
+  print("&&&&",np.shape(image))
+
+  out_raw = np.zeros((image.shape[0], image.shape[1]))
+  out_raw[0::2, 0::2] = image[0::2, 0::2, 0]
+  out_raw[1::2, 0::2] = image[1::2, 0::2, 1]
+  out_raw[0::2, 1::2] = image[0::2, 1::2, 1]
+  out_raw[1::2, 1::2] = image[1::2, 1::2, 2]
+
+
   image = tf.stack((red, green_red, green_blue, blue), axis=-1)
   image = tf.reshape(image, (shape[0] // 2, shape[1] // 2, 4))
-  return image
+  return image, out_raw
 
 
 def unprocess(image):
@@ -136,7 +148,7 @@ def unprocess(image):
     # Clips saturated pixels.
     image = tf.clip_by_value(image, 0.0, 1.0)
     # Applies a Bayer mosaic.
-    image = mosaic(image)
+    image, out_raw = mosaic(image)
 
     metadata = {
         'cam2rgb': cam2rgb,
@@ -144,7 +156,7 @@ def unprocess(image):
         'red_gain': red_gain,
         'blue_gain': blue_gain,
     }
-    return image, metadata
+    return image, metadata, out_raw
 
 
 def random_noise_levels():

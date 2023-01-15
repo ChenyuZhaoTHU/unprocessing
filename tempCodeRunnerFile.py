@@ -1,0 +1,1 @@
+tf.Session().run(image)
